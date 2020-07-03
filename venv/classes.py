@@ -4,17 +4,9 @@ bg = pygame.image.load('Sprites/Game/bg.jpg')
 
 class Player(object):
 
-    walk_right = [pygame.image.load('Sprites/Game/R1.png'), pygame.image.load('Sprites/Game/R2.png'),
-                  pygame.image.load('Sprites/Game/R3.png'), pygame.image.load('Sprites/Game/R4.png'),
-                  pygame.image.load('Sprites/Game/R5.png'), pygame.image.load('Sprites/Game/R6.png'),
-                  pygame.image.load('Sprites/Game/R7.png'), pygame.image.load('Sprites/Game/R8.png'),
-                  pygame.image.load('Sprites/Game/R9.png')]
+    walk_right = [pygame.image.load('Sprites/Game/R%s.png' % frame) for frame in range(1, 10)]
 
-    walk_left = [pygame.image.load('Sprites/Game/L1.png'), pygame.image.load('Sprites/Game/L2.png'),
-                 pygame.image.load('Sprites/Game/L3.png'), pygame.image.load('Sprites/Game/L4.png'),
-                 pygame.image.load('Sprites/Game/L5.png'), pygame.image.load('Sprites/Game/L6.png'),
-                 pygame.image.load('Sprites/Game/L7.png'), pygame.image.load('Sprites/Game/L8.png'),
-                 pygame.image.load('Sprites/Game/L9.png')]
+    walk_left = [pygame.image.load('Sprites/Game/L%s.png' % frame) for frame in range(1, 10)]
 
     def __init__(self, x, y, width, height):
         self.x = x
@@ -28,9 +20,9 @@ class Player(object):
         self.right = False
         self.walk_count = 0
         self.standing = True
+        self.hitbox = (self.x + 17, self.y + 11, 29, 52)
 
     def draw(self, win):
-        win.blit(bg, (0, 0))
         if not self.standing:
             if self.walk_count + 1 >= 27:
                 self.walk_count = 0
@@ -45,22 +37,33 @@ class Player(object):
                 win.blit(self.walk_right[0], (self.x, self.y))
             else:
                 win.blit(self.walk_left[0], (self.x, self.y))
+        self.hitbox = (self.x + 17, self.y + 11, 29, 52)
+        #pygame.draw.rect(win, (255,0,0), self.hitbox, 2)
+
+    def hit(self, win):
+        self.is_jump = False
+        self.jump_count = 10
+        self.x = 60
+        self.y = 410
+        self.walk_count = 0
+        font_hit = pygame.font.SysFont("comicsans", 40)
+        text = font_hit.render("Hit taken, -5 to score", 1, (255, 0, 0))
+        win.blit(text, (500 / 2 - (text.get_width() / 2), 200))
+        pygame.display.update()
+        i = 0
+        while i < 100:
+            pygame.time.delay(10)
+            i += 1
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    i = 301
+                    pygame.quit()
 
 
 class Enemy(object):
-    walk_right = [pygame.image.load('Sprites/Game/R1E.png'), pygame.image.load('Sprites/Game/R2E.png'),
-                  pygame.image.load('Sprites/Game/R3E.png'), pygame.image.load('Sprites/Game/R4E.png'),
-                  pygame.image.load('Sprites/Game/R5E.png'), pygame.image.load('Sprites/Game/R6E.png'),
-                  pygame.image.load('Sprites/Game/R7E.png'), pygame.image.load('Sprites/Game/R8E.png'),
-                  pygame.image.load('Sprites/Game/R9E.png'), pygame.image.load('Sprites/Game/R10E.png'),
-                  pygame.image.load('Sprites/Game/R11E.png')]
+    walk_right = [pygame.image.load('Sprites/Game/R%sE.png' % frame) for frame in range(1, 12)]
 
-    walk_left = [pygame.image.load('Sprites/Game/L1E.png'), pygame.image.load('Sprites/Game/L2E.png'),
-                 pygame.image.load('Sprites/Game/L3E.png'), pygame.image.load('Sprites/Game/L4E.png'),
-                 pygame.image.load('Sprites/Game/L5E.png'), pygame.image.load('Sprites/Game/L6E.png'),
-                 pygame.image.load('Sprites/Game/L7E.png'), pygame.image.load('Sprites/Game/L8E.png'),
-                 pygame.image.load('Sprites/Game/L9E.png'), pygame.image.load('Sprites/Game/L10E.png'),
-                 pygame.image.load('Sprites/Game/L11E.png')]
+    walk_left = [pygame.image.load('Sprites/Game/L%sE.png' % frame) for frame in range(1, 12)]
 
     def __init__(self, x, y, width, height, end):
         self.x = x
@@ -71,18 +74,27 @@ class Enemy(object):
         self.path = [self.x, self.end]
         self.walk_count = 0
         self.vel = 3
+        self.hitbox = (self.x + 17, self.y + 11, 29, 52)
+        self.health = 9
+        self.visible = True
 
     def draw(self, win):
         self.move()
-        if self.walk_count + 1 >= 33:
-            self.walk_count = 0
+        if self.visible:
+            if self.walk_count + 1 >= 33:
+                self.walk_count = 0
 
-        if self.vel > 0:
-            win.blit(self.walk_right[self.walk_count//3], (self.x, self.y))
-            self.walk_count += 1
-        else:
-            win.blit(self.walk_left[self.walk_count // 3], (self.x, self.y))
-            self.walk_count += 1
+            if self.vel > 0:
+                win.blit(self.walk_right[self.walk_count//3], (self.x, self.y))
+                self.walk_count += 1
+            else:
+                win.blit(self.walk_left[self.walk_count // 3], (self.x, self.y))
+                self.walk_count += 1
+            self.hitbox = (self.x + 20, self.y + 5, 29, 52)
+            pygame.draw.rect(win, (255, 0, 0), (self.hitbox[0], self.hitbox[1] - 20, 50, 10))
+            pygame.draw.rect(win, (0, 128, 0), (self.hitbox[0], self.hitbox[1] - 20,
+                                                50 - (4.75 * (9 - self.health)), 10))
+            #pygame.draw.rect(win, (255, 0, 0), self.hitbox, 2)
 
     def move(self):
         if self.vel > 0:
@@ -97,6 +109,12 @@ class Enemy(object):
             else:
                 self.vel = self.vel * -1
                 self.walk_count = 0
+
+    def hit(self):
+        if self.health > 0:
+            self.health -= 1
+        else:
+            self.visible = False
 
 
 class Projectile(object):
